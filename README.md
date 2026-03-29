@@ -16,6 +16,17 @@ Powered by [Infracost](https://infracost.io) – open-source & accurate pricing 
 - JSON and readable text report outputs.
 - No setup – the action installs Terraform and Infracost at runtime.
 
+## 🔑 Setup
+
+Before using this action, create an Infracost API key and store it as a GitHub Actions secret. The API key is available with Infracost's free plan:
+
+1. Sign in to [Infracost](https://www.infracost.io) and create or copy your API key from your account/dashboard.
+2. In your GitHub repository, go to **Settings** → **Secrets and variables** → **Actions**.
+3. Create a new repository secret named `INFRACOST_API_KEY`.
+4. Reference it in your workflow as `${{ secrets.INFRACOST_API_KEY }}`.
+
+Do not hardcode the API key directly in your workflow file or commit it to the repository.
+
 ## 🎯 Usage
 
 ### Basic Example (AWS Terraform)
@@ -28,7 +39,7 @@ jobs:
   cost:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Estimate Costs
         id: cost
         uses: manmohanmirkar123/cloud-cost-estimator-action@v1.0.0  # or ./ for local
@@ -78,7 +89,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: manmohanmirkar123/cloud-cost-estimator-action@v1.0.0
         with:
           iac-path: examples/terraform-aws
