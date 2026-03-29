@@ -8,10 +8,50 @@ set -euo pipefail
 : "${GITHUB_OUTPUT:=/github/output}"
 : "${INFRACOST_API_KEY:?INFRACOST_API_KEY must be set}"
 
+LOCAL_BIN_DIR="${RUNNER_TEMP:-/tmp}/cloud-cost-estimator-bin"
+mkdir -p "$LOCAL_BIN_DIR"
+export PATH="$LOCAL_BIN_DIR:$PATH"
+if [ -n "${GITHUB_PATH:-}" ]; then
+  echo "$LOCAL_BIN_DIR" >> "$GITHUB_PATH"
+fi
+
+download_file() {
+  local url="$1"
+  local output="$2"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url" -o "$output"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$url" -O "$output"
+  else
+    echo "::error::Neither curl nor wget is available to download dependencies."
+    exit 1
+  fi
+}
+
+install_jq() {
+  local jq_arch
+  case "$(uname -m)" in
+    x86_64) jq_arch="amd64" ;;
+    aarch64|arm64) jq_arch="arm64" ;;
+    *)
+      echo "::error::Unsupported jq architecture: $(uname -m)"
+      exit 1
+      ;;
+  esac
+
+  download_file \
+    "https://github.com/jqlang/jq/releases/latest/download/jq-linux-${jq_arch}" \
+    "$LOCAL_BIN_DIR/jq"
+  chmod +x "$LOCAL_BIN_DIR/jq"
+}
+
 echo "::group::Setup Dependencies"
-# Install dependencies
-apt-get update -qq
-apt-get install -y -qq jq curl wget unzip
+# Composite actions run as the workflow user, so install any missing tools into
+# a writable temp directory instead of using apt or system paths.
+if ! command -v jq >/dev/null 2>&1; then
+  install_jq
+fi
 
 # Install Terraform from the official release zip so it works across runner images.
 if ! command -v terraform &> /dev/null; then
@@ -25,28 +65,49 @@ if ! command -v terraform &> /dev/null; then
       ;;
   esac
 
-  terraform_version="$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version')"
-  wget -q "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_${terraform_arch}.zip"
+  terraform_version="$(
+    if command -v curl >/dev/null 2>&1; then
+      curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version'
+    elif command -v wget >/dev/null 2>&1; then
+      wget -qO- https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r '.current_version'
+    else
+      echo "::error::Neither curl nor wget is available to download Terraform."
+      exit 1
+    fi
+  )"
+  download_file "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_${terraform_arch}.zip" \
+    "terraform_${terraform_version}_linux_${terraform_arch}.zip"
   unzip -q "terraform_${terraform_version}_linux_${terraform_arch}.zip"
-  mv terraform /usr/bin/terraform
-  chmod +x /usr/bin/terraform
+  mv terraform "$LOCAL_BIN_DIR/terraform"
+  chmod +x "$LOCAL_BIN_DIR/terraform"
   rm -f "terraform_${terraform_version}_linux_${terraform_arch}.zip"
 fi
 
 # Install Infracost latest release
 if ! command -v infracost &> /dev/null; then
+  infracost_arch="$(uname -m)"
+  case "$infracost_arch" in
+    x86_64) infracost_arch="amd64" ;;
+    aarch64|arm64) infracost_arch="arm64" ;;
+    *)
+      echo "::error::Unsupported Infracost architecture: $infracost_arch"
+      exit 1
+      ;;
+  esac
+
   tmp_dir="$(mktemp -d)"
-  wget -q https://github.com/infracost/infracost/releases/latest/download/infracost-linux-amd64.tar.gz
-  tar -xzf infracost-linux-amd64.tar.gz -C "$tmp_dir"
+  download_file "https://github.com/infracost/infracost/releases/latest/download/infracost-linux-${infracost_arch}.tar.gz" \
+    "infracost-linux-${infracost_arch}.tar.gz"
+  tar -xzf "infracost-linux-${infracost_arch}.tar.gz" -C "$tmp_dir"
   infracost_bin="$(find "$tmp_dir" -type f \( -name infracost -o -name 'infracost-*' \) | head -n 1)"
   if [ -z "$infracost_bin" ]; then
     echo "::error::Infracost binary not found after extract"
     rm -rf "$tmp_dir"
     exit 1
   fi
-  mv "$infracost_bin" /usr/local/bin/infracost
-  chmod +x /usr/local/bin/infracost
-  rm -f infracost-linux-amd64.tar.gz
+  mv "$infracost_bin" "$LOCAL_BIN_DIR/infracost"
+  chmod +x "$LOCAL_BIN_DIR/infracost"
+  rm -f "infracost-linux-${infracost_arch}.tar.gz"
   rm -rf "$tmp_dir"
 fi
 echo "::endgroup::"
