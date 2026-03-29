@@ -1,8 +1,8 @@
 # Cloud Cost Estimator
 
-[![Actions status](https://github.com/manmohanmirkar/cloud-cost-estimator-action/actions/workflows/test.yml/badge.svg)](https://github.com/manmohanmirkar/cloud-cost-estimator-action/actions/workflows/test.yml)
-[![Version](https://img.shields.io/github/v/release/manmohanmirkar/cloud-cost-estimator-action?label=version)](https://github.com/manmohanmirkar/cloud-cost-estimator-action/releases/latest)
-[![License](https://img.shields.io/github/license/manmohanmirkar/cloud-cost-estimator-action?label=license)](LICENSE)
+[![Actions status](https://github.com/manmohanmirkar123/cloud-cost-estimator-action/actions/workflows/test.yml/badge.svg)](https://github.com/manmohanmirkar123/cloud-cost-estimator-action/actions/workflows/test.yml)
+[![Version](https://img.shields.io/github/v/release/manmohanmirkar123/cloud-cost-estimator-action?label=version)](https://github.com/manmohanmirkar123/cloud-cost-estimator-action/releases/latest)
+[![License](https://img.shields.io/github/license/manmohanmirkar123/cloud-cost-estimator-action?label=license)](LICENSE)
 
 Estimate monthly cloud resource costs directly from your IaC code (Terraform, CloudFormation) for **AWS**, **GCP**, and **Azure**.
 
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Estimate Costs
         id: cost
-        uses: manmohanmirkar/cloud-cost-estimator-action@v1.0.0  # or ./ for local
+        uses: manmohanmirkar123/cloud-cost-estimator-action@v1.0.0  # or ./ for local
         with:
           iac-path: ./terraform
           provider: aws
@@ -79,7 +79,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: manmohanmirkar/cloud-cost-estimator-action@v1.0.0
+      - uses: manmohanmirkar123/cloud-cost-estimator-action@v1.0.0
         with:
           iac-path: examples/terraform-aws
           provider: aws
@@ -97,7 +97,7 @@ The workflow run will then show a downloadable artifact such as `cloud-cost-repo
 ## 🏪 Publish to GitHub Marketplace
 
 1. Push & tag: `git tag v1.0.0 && git push --tags`
-2. Create [Release](https://github.com/manmohanmirkar/cloud-cost-estimator-action/releases)
+2. Create [Release](https://github.com/manmohanmirkar123/cloud-cost-estimator-action/releases)
 3. Click **"Publish to GitHub Marketplace"** → Approved in days!
 
 ## 🔧 Local Testing
