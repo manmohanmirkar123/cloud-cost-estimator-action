@@ -12,8 +12,9 @@ Powered by [Infracost](https://infracost.io) – open-source & accurate pricing 
 
 - Supports Terraform (.tf) and CloudFormation (.json/.yaml).
 - Real-time cost estimates during PRs/CI.
-- JSON/HTML outputs for Slack/Jira integrations.
-- No setup – Docker container bundles everything.
+- Pull request comment updates with the latest cost summary.
+- JSON and readable text report outputs.
+- No setup – the action installs Terraform and Infracost at runtime.
 
 ## 🎯 Usage
 
@@ -34,9 +35,25 @@ jobs:
         with:
           iac-path: ./terraform
           provider: aws
+          infracost-api-key: ${{ secrets.INFRACOST_API_KEY }}
       - name: Show Cost
         run: echo "Monthly cost: ${{ steps.cost.outputs.total-monthly-cost }}"
 ```
+
+This action can also create or update a pull request comment automatically. Set `comment-on-pr: 'false'` if you only want outputs.
+It can also upload the generated reports to the GitHub Actions UI as a downloadable artifact.
+
+### Inputs
+
+| Input | Required | Description |
+| ----- | -------- | ----------- |
+| `iac-path` | Yes | Path to the Terraform or CloudFormation directory |
+| `provider` | Yes | Cloud provider: `aws`, `gcp`, or `azure` |
+| `infracost-api-key` | Yes | Infracost API key used for pricing lookup |
+| `github-token` | No | GitHub token for PR comments, defaults to `${{ github.token }}` |
+| `comment-on-pr` | No | `true` to create/update a PR comment, defaults to `true` |
+| `upload-report-artifact` | No | `true` to upload report files to the Actions UI, defaults to `true` |
+| `artifact-name` | No | Artifact name shown in the GitHub Actions UI |
 
 ### Outputs
 
@@ -44,7 +61,32 @@ jobs:
 | -------------------- | ------ | ----------------------- |
 | `total-monthly-cost` | string | e.g. "127.50" (USD)     |
 | `breakdown`          | JSON   | Full resource breakdown |
-| `report`             | string | Path to HTML report     |
+| `report`             | string | Path to generated report |
+| `report-json`        | string | Path to generated JSON report |
+
+### Pull Request Example
+
+```yaml
+name: IaC Cost Check
+on:
+  pull_request:
+
+jobs:
+  cost:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: manmohanmirkar/cloud-cost-estimator-action@v1.0.0
+        with:
+          iac-path: examples/terraform-aws
+          provider: aws
+          infracost-api-key: ${{ secrets.INFRACOST_API_KEY }}
+```
+
+The workflow run will then show a downloadable artifact such as `cloud-cost-report` in the GitHub Actions UI.
 
 ## ⛅️ Providers
 
@@ -62,7 +104,27 @@ jobs:
 
 ```bash
 brew install act
-act workflow_dispatch -j test
+mkdir -p /tmp/act-artifacts
+act workflow_dispatch -j test \
+  --container-architecture linux/amd64 \
+  --artifact-server-path /tmp/act-artifacts \
+  --artifact-server-addr 127.0.0.1 \
+  --cache-server-addr 127.0.0.1 \
+  -s INFRACOST_API_KEY=your_key_here
+```
+
+You can also run the entrypoint directly in a Linux container if you want to debug the script itself:
+
+```bash
+docker run --rm -it \
+  -v "$PWD":/work \
+  -w /work \
+  -e GITHUB_WORKSPACE=/work \
+  -e GITHUB_OUTPUT=/tmp/github_output \
+  -e IAC_PATH=examples/terraform-aws \
+  -e PROVIDER=aws \
+  ubuntu:22.04 \
+  bash -lc './entrypoint.sh && cat /tmp/github_output'
 ```
 
 Docker image: `ghcr.io/manmohanmirkar/cloud-cost-estimator-action:main`
@@ -74,8 +136,3 @@ See CONTRIBUTING.md
 ## 📄 License
 
 MIT
-
-```
-</xai:function_call name="edit_file">
-<parameter name="path">/Users/manmohanmirkar/github-custom-actions/TODO.md
-```

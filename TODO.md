@@ -1,14 +1,10 @@
-# Cloud Cost Estimator Action - Task Progress
+# Task: Fix Cloud Cost Estimator Action Test Failure
 
-## Approved Plan Steps:
+## Steps:
 
-- [x] Update README.md with correct badges and Marketplace info
-- [x] Create action.yml with inputs/outputs
-- [x] Create test workflow (.github/workflows/test.yml)
-- [ ] Test locally with `act`
-- [ ] Push to GitHub repo
-- [ ] Create v1.0.0 release and submit to Marketplace
-- [ ] Push to GitHub repo
-- [ ] Create v1.0.0 release and submit to Marketplace
-
-**Next:** README update complete after this file.
+- [x] Step 1: Update entrypoint.sh with dependency installations (jq, Terraform, Infracost).
+- [x] Step 2: Fix IaC path handling with `${GITHUB_WORKSPACE:-.}` and debug logs.
+- [x] Step 3: Improve IaC file detection using `find` instead of `ls` glob.
+- [x] Step 4: Test with `rm -rf ./artifacts && act workflow_dispatch -j test --platform linux/amd64`. (Passed IaC detection, failed at TF install)
+- [x] Step 5: Fix install with apt repo and latest releases.
+- [ ] Step 6: Fix Infracost tar extract with if flat or dir, re-test.
