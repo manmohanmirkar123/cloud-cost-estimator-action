@@ -129,20 +129,11 @@ fi
 
 # Create Infracost config
 cat > infracost.hcl << EOF
-version = "0.1"
-[aws]
-  currency_code = "USD"
-[azure]
-  currency_code = "USD"
-[gcp]
-  currency_code = "USD"
-
-projects = [
-  {
-    name = "iac-project"
-    path = "."
-  }
-]
+version: 0.1
+projects:
+  - path: .
+    name: iac-project
+    skip_autodetect: true
 EOF
 
 # Export API key if provided
