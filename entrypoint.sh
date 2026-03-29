@@ -75,12 +75,12 @@ if ! command -v terraform &> /dev/null; then
       exit 1
     fi
   )"
+  terraform_tmp_dir="$(mktemp -d)"
   download_file "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_${terraform_arch}.zip" \
-    "terraform_${terraform_version}_linux_${terraform_arch}.zip"
-  unzip -q "terraform_${terraform_version}_linux_${terraform_arch}.zip"
-  install -m 0755 terraform "$LOCAL_BIN_DIR/terraform"
-  rm -f terraform
-  rm -f "terraform_${terraform_version}_linux_${terraform_arch}.zip"
+    "${terraform_tmp_dir}/terraform_${terraform_version}_linux_${terraform_arch}.zip"
+  unzip -qo "${terraform_tmp_dir}/terraform_${terraform_version}_linux_${terraform_arch}.zip" -d "$terraform_tmp_dir"
+  install -m 0755 "${terraform_tmp_dir}/terraform" "$LOCAL_BIN_DIR/terraform"
+  rm -rf "$terraform_tmp_dir"
 fi
 
 # Install Infracost latest release
