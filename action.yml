@@ -1,0 +1,35 @@
+name: 'Cloud Cost Estimator'
+description: 'Estimate monthly IaC costs (Terraform/CloudFormation) for AWS, GCP, Azure using Infracost'
+author: 'manmohanmirkar'
+branding:
+  icon: 'dollar-sign'
+  color: 'green'
+inputs:
+  iac-path:
+    description: 'Path to IaC directory (Terraform/CloudFormation)'
+    required: true
+    default: '.'
+  provider:
+    description: 'Cloud provider: aws, gcp, azure'
+    required: true
+    default: 'aws'
+  infracost-api-key:
+    description: 'Infracost API key (optional, for latest pricing)'
+    required: false
+outputs:
+  total-monthly-cost:
+    description: 'Total estimated monthly cost (USD)'
+  breakdown:
+    description: 'Full JSON cost breakdown'
+  report:
+    description: 'Path to HTML report'
+runs:
+  using: 'composite'
+  steps:
+    - run: ${{ github.action_path }}/entrypoint.sh
+      shell: bash
+      env:
+        IAC_PATH: ${{ inputs.iac-path }}
+        PROVIDER: ${{ inputs.provider }}
+        INFRACOST_API_KEY: ${{ inputs.infracost-api-key || '' }}
+        GITHUB_OUTPUT: ${{ runner.temp }}/github_output

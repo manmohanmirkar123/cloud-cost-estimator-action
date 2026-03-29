@@ -1,0 +1,25 @@
+name: Test Cloud Cost Estimator
+on: [workflow_dispatch, push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Cost Estimation
+        id: cost
+        uses: ./
+        with:
+          iac-path: examples/terraform-aws
+          provider: aws
+      - name: Show Results
+        run: |
+          echo "Total Monthly Cost: ${{ steps.cost.outputs.total-monthly-cost }} USD"
+          cat ${{ steps.cost.outputs.report }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cost-report
+          path: |
+            report.html
+            report.json
