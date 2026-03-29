@@ -4,10 +4,21 @@ on: [workflow_dispatch, push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: ${{ secrets.INFRACOST_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Check Infracost secret
+        id: secret_check
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          if [ -n "$INFRACOST_API_KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "INFRACOST_API_KEY is not set; skipping cost estimation test."
+          fi
       - name: Run Cost Estimation
+        if: ${{ steps.secret_check.outputs.has_key == 'true' }}
         id: cost
         uses: ./
         with:
@@ -17,6 +28,7 @@ jobs:
           comment-on-pr: 'false'
           upload-report-artifact: 'true'
       - name: Show Results
+        if: ${{ steps.secret_check.outputs.has_key == 'true' }}
         run: |
           echo "Total Monthly Cost: ${{ steps.cost.outputs.total-monthly-cost }} USD"
           cat ${{ steps.cost.outputs.report }}
