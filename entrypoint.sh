@@ -78,8 +78,8 @@ if ! command -v terraform &> /dev/null; then
   download_file "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_${terraform_arch}.zip" \
     "terraform_${terraform_version}_linux_${terraform_arch}.zip"
   unzip -q "terraform_${terraform_version}_linux_${terraform_arch}.zip"
-  mv terraform "$LOCAL_BIN_DIR/terraform"
-  chmod +x "$LOCAL_BIN_DIR/terraform"
+  install -m 0755 terraform "$LOCAL_BIN_DIR/terraform"
+  rm -f terraform
   rm -f "terraform_${terraform_version}_linux_${terraform_arch}.zip"
 fi
 
@@ -105,8 +105,7 @@ if ! command -v infracost &> /dev/null; then
     rm -rf "$tmp_dir"
     exit 1
   fi
-  mv "$infracost_bin" "$LOCAL_BIN_DIR/infracost"
-  chmod +x "$LOCAL_BIN_DIR/infracost"
+  install -m 0755 "$infracost_bin" "$LOCAL_BIN_DIR/infracost"
   rm -f "infracost-linux-${infracost_arch}.tar.gz"
   rm -rf "$tmp_dir"
 fi
